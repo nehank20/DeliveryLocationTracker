@@ -76,6 +76,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
         }
 //        mMap.isMyLocationEnabled = true
 
+
+
         val deliveryLocation =
             LatLng(19.065419, 72.833122)
         googleMap.addMarker(
