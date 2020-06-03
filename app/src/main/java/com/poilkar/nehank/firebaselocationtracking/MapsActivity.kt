@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -22,6 +21,7 @@ import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -75,8 +75,43 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
             return
         }
 //        mMap.isMyLocationEnabled = true
+
+        val deliveryLocation =
+            LatLng(19.065419, 72.833122)
+        googleMap.addMarker(
+            MarkerOptions().position(deliveryLocation)
+                .title("Your Location")
+        )
+
+
         mGoogleMap = googleMap
-        mGoogleMap.setOnInfoWindowClickListener(this)
+        mGoogleMap.setOnInfoWindowClickListener(this@MapsActivity)
+
+//        mGoogleMap.setOnMarkerClickListener(object: GoogleMap.OnMarkerClickListener{
+//            override fun onMarkerClick(marker: Marker?): Boolean {
+//                if (marker != null) {
+//                    if (marker.getSnippet().equals("This is you")) {
+//                        marker.hideInfoWindow()
+//                    } else {
+//                        val builder: AlertDialog.Builder = AlertDialog.Builder(this@MapsActivity)
+//                        builder.setMessage(marker.snippet)
+//                            .setCancelable(true)
+//                            .setPositiveButton("Yes"
+//                            ) { dialog, id -> dialog.dismiss() }
+//                            .setNegativeButton("No"
+//                            ) { dialog, id -> dialog.cancel() }
+//                        val alert: AlertDialog = builder.create()
+//                        alert.show()
+//                    }
+//                }else{
+//                    Log.d("TAGG","marker null")
+//                }
+//                return true
+//            }
+//
+//        })
+
+
 
 
     }
@@ -278,6 +313,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                 val alert: AlertDialog = builder.create()
                 alert.show()
             }
+        }else{
+            Log.d("TAGG","marker null")
         }
     }
 }
