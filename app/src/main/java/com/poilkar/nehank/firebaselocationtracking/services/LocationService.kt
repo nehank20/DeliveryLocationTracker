@@ -1,12 +1,10 @@
-package com.poilkar.nehank.firebaselocationtracking
+package com.poilkar.nehank.firebaselocationtracking.services
 
 import android.Manifest
-import android.R
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.app.Service.START_NOT_STICKY
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -18,12 +16,11 @@ import android.util.Log
 import androidx.annotation.Nullable
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import androidx.core.content.ContextCompat.getSystemService
 import com.google.android.gms.location.*
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
-import com.google.firebase.firestore.auth.User
+import com.poilkar.nehank.firebaselocationtracking.model.DriverLocation
 
 
 class LocationService : Service() {
@@ -74,8 +71,10 @@ class LocationService : Service() {
             // Create the location request to start receiving updates
             val mLocationRequestHighAccuracy = LocationRequest()
             mLocationRequestHighAccuracy.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-            mLocationRequestHighAccuracy.interval = UPDATE_INTERVAL
-            mLocationRequestHighAccuracy.fastestInterval = FASTEST_INTERVAL
+            mLocationRequestHighAccuracy.interval =
+                UPDATE_INTERVAL
+            mLocationRequestHighAccuracy.fastestInterval =
+                FASTEST_INTERVAL
 
 
             // new Google API SDK v11 uses getFusedLocationProviderClient(this)
@@ -99,7 +98,11 @@ class LocationService : Service() {
 //                                (ApplicationProvider.getApplicationContext() as UserClient).getUser()
                             val geoPoint =
                                 GeoPoint(location.latitude, location.longitude)
-                            val driverLocation = DriverLocation(geoPoint, FieldValue.serverTimestamp())
+                            val driverLocation =
+                                DriverLocation(
+                                    geoPoint,
+                                    FieldValue.serverTimestamp()
+                                )
                             saveUserLocation(driverLocation)
                         }
                     }
@@ -118,7 +121,8 @@ class LocationService : Service() {
             locationRef.set(driverLocation)
                 .addOnCompleteListener { task ->
                     if (task.isSuccessful) {
-                        Log.d(TAG, """onComplete:inserted user location into database.latitude: """ + driverLocation.geo_points!!.latitude +
+                        Log.d(
+                            TAG, """onComplete:inserted user location into database.latitude: """ + driverLocation.geo_points!!.latitude +
                                     "\n longitude: " + driverLocation.geo_points.longitude)
                     }
                 }

@@ -1,4 +1,4 @@
-package com.poilkar.nehank.firebaselocationtracking
+package com.poilkar.nehank.firebaselocationtracking.ui
 
 import android.Manifest
 import android.app.ActivityManager
@@ -6,18 +6,18 @@ import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Point
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.SystemClock
 import android.util.Log
+import android.view.animation.LinearInterpolator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.CameraUpdateFactory
-import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
@@ -27,6 +27,11 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import com.google.maps.android.clustering.ClusterManager
+import com.poilkar.nehank.firebaselocationtracking.R
+import com.poilkar.nehank.firebaselocationtracking.marker.ClusterManagerRenderer
+import com.poilkar.nehank.firebaselocationtracking.marker.ClusterMarker
+import com.poilkar.nehank.firebaselocationtracking.model.DriverLocation
+import com.poilkar.nehank.firebaselocationtracking.services.LocationService
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoWindowClickListener{
@@ -48,6 +53,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
     lateinit var clusterMarker : ClusterMarker
 
 
+    lateinit var deliveryLocation: LatLng
+//    lateinit var mGeoApiContext: GeoApiContext
+
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -58,6 +69,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
 
         firebaseFirestore = FirebaseFirestore.getInstance()
         locationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+
     }
 
 
@@ -78,12 +91,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
 
 
 
-        val deliveryLocation =
+        deliveryLocation =
             LatLng(19.065419, 72.833122)
         googleMap.addMarker(
             MarkerOptions().position(deliveryLocation)
                 .title("Your Location")
         )
+
+
+
+//        if(!this::mGeoApiContext.isInitialized){
+//            mGeoApiContext = GeoApiContext.Builder()
+//                .apiKey(resources.getString(R.string.google_maps_key))
+//                .build()
+//        }
 
 
         mGoogleMap = googleMap
@@ -137,7 +158,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                 val location = it.result
                 val geoPoints = GeoPoint(location?.latitude!!, location.longitude)
                 saveDriverLocation(geoPoints)
-                startLocationService()
+//                startLocationService()
                 Log.d("TAGG", "GEO Points : ${location.latitude} and ${location.longitude}")
             } else {
                 Log.d("TAGG", "task unscuccesfull")
@@ -146,7 +167,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
     }
 
     private fun saveDriverLocation(geoPoints: GeoPoint) {
-        val driverLocation = DriverLocation(geoPoints, FieldValue.serverTimestamp())
+        val driverLocation =
+            DriverLocation(
+                geoPoints,
+                FieldValue.serverTimestamp()
+            )
         val documentReference = firebaseFirestore.collection("DriverLocation").document("DriverID")
         documentReference.set(driverLocation).addOnCompleteListener {
             if (it.isSuccessful) {
@@ -166,7 +191,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
         val rightBoundary = geoPoints.longitude + .1
         boundaryMaps =
             LatLngBounds(LatLng(bottomBoundary, leftBoundary), LatLng(topBoundary, rightBoundary))
-        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 10))
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 10))
     }
 
     override fun onResume() {
@@ -187,7 +212,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                 mClusterManager = ClusterManager<ClusterMarker?>(this, mGoogleMap)
             }
             if (!this::mClusterManagerRenderer.isInitialized) {
-                mClusterManagerRenderer = ClusterManagerRenderer(this, mGoogleMap, mClusterManager)
+                mClusterManagerRenderer =
+                    ClusterManagerRenderer(
+                        this,
+                        mGoogleMap,
+                        mClusterManager
+                    )
                 mClusterManager.setRenderer(mClusterManagerRenderer)
             }
 
@@ -196,18 +226,20 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                 val snippet = "Drivers location"
                 val avatar: Int =
                     resources.getIdentifier("ic_car_top_view", "drawable", this.packageName);
-                clusterMarker = ClusterMarker(
-                    LatLng(geoPoints.latitude, geoPoints.longitude),
-                    "Driver",
-                    snippet,
-                    avatar
-                )
+                clusterMarker =
+                    ClusterMarker(
+                        LatLng(geoPoints.latitude, geoPoints.longitude),
+                        "Driver",
+                        snippet,
+                        avatar
+                    )
                 mClusterManager.addItem(clusterMarker)
             } catch (e: NullPointerException) {
 
             }
 
             mClusterManager.cluster()
+//            calculateDirections(deliveryLocation)
             setCameraView(geoPoints)
         }
     }
@@ -228,7 +260,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
         val manager =
             getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         for (service in manager.getRunningServices(Int.MAX_VALUE)) {
-            if ("com.poilkar.nehank.firebaselocationtracking.LocationService" == service.service.className) {
+            if ("com.poilkar.nehank.firebaselocationtracking.services.LocationService" == service.service.className) {
                 Log.d("TAGG", "isLocationServiceRunning: location service is already running.")
                 return true
             }
@@ -280,7 +312,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                             clusterMarker.mPosition = LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude)
 
 
-                            mClusterManagerRenderer.setUpdateMarker(clusterMarker)
+                            mClusterManagerRenderer.setUpdateMarker(deliveryLocation, clusterMarker, LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude))
+
+//                            animateMarker(clusterMarker,clusterMarker.mPosition,false)
+
+
+//                            MarkerAnimation.animateMarkerToGB(clusterMarker, LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude), LatLngInterpolator.Spherical());
 
                         } catch (e: java.lang.NullPointerException) {
                             Log.e(
@@ -319,4 +356,81 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
             Log.d("TAGG","marker null")
         }
     }
+
+
+    fun animateMarker(
+        marker: ClusterMarker,
+        toPosition: LatLng,
+        hideMarker: Boolean
+    ) {
+        val handler = Handler()
+        val start: Long = SystemClock.uptimeMillis()
+        val proj: Projection = mGoogleMap.getProjection()
+        val startPoint: Point = proj.toScreenLocation(marker.position)
+        val startLatLng: LatLng =
+            proj.fromScreenLocation(startPoint)
+        val duration: Long = 500
+        val interpolator: LinearInterpolator = LinearInterpolator()
+        handler.post(object : Runnable {
+            override fun run() {
+                val elapsed: Long = SystemClock.uptimeMillis() - start
+                val t: Float = interpolator.getInterpolation(
+                    elapsed.toFloat()
+                            / duration
+                )
+                val lng = t * toPosition.longitude + (1 - t)* startLatLng.longitude
+                val lat = t * toPosition.latitude + (1 - t)* startLatLng.latitude
+                marker.mPosition = LatLng(lat, lng)
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16)
+                } else {
+//                    if (hideMarker) {
+//                        marker.isVisible = false
+//                    } else {
+//                        marker.isVisible = true
+//                    }
+                }
+            }
+        })
+    }
+
+
+//    private fun calculateDirections(latLng: LatLng) {
+//        Log.d("TAGG", "calculateDirections: calculating directions.")
+//        val destination = com.google.maps.model.LatLng(
+//            latLng.latitude,
+//            latLng.longitude
+//        )
+//        val directions = DirectionsApiRequest(mGeoApiContext)
+//        directions.alternatives(true)
+//        directions.origin(
+//            com.google.maps.model.LatLng(
+//                clusterMarker.mPosition.latitude,
+//                clusterMarker.mPosition.longitude
+//            )
+//        )
+//
+//        directions.destination(destination).setCallback(object :
+//            PendingResult.Callback<DirectionsResult?> {
+//            override fun onResult(result: DirectionsResult?) {
+////                Log.d(TAG, "calculateDirections: routes: " + result.routes[0].toString());
+////                Log.d(TAG, "calculateDirections: duration: " + result.routes[0].legs[0].duration);
+////                Log.d(TAG, "calculateDirections: distance: " + result.routes[0].legs[0].distance);
+////                Log.d(TAG, "calculateDirections: geocodedWayPoints: " + result.geocodedWaypoints[0].toString());
+//                Log.d(
+//                    "TAGG",
+//                    "onResult: successfully retrieved directions."
+//                )
+////                addPolylinesToMap(result)
+//            }
+//
+//            override fun onFailure(e: Throwable) {
+//                Log.e(
+//                    "TAGG",
+//                    "calculateDirections: Failed to get directions: " + e.message
+//                )
+//            }
+//        })
+//    }
 }

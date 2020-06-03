@@ -37,7 +37,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".ui.MapsActivity"
             android:label="@string/title_activity_maps">
 
             <intent-filter>
@@ -45,9 +45,6 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-        </activity>
-        <activity android:name=".MainActivity">
 
         </activity>
 
@@ -61,7 +58,7 @@
             android:required="false" />
 
 
-        <service android:name=".LocationService" android:stopWithTask="true">
+        <service android:name=".services.LocationService" android:stopWithTask="true">
 
 
         </service>

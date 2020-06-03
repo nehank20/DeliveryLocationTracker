@@ -1,4 +1,4 @@
-package com.poilkar.nehank.firebaselocationtracking
+package com.poilkar.nehank.firebaselocationtracking.marker
 
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterItem

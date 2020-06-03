@@ -1,4 +1,4 @@
-package com.poilkar.nehank.firebaselocationtracking
+package com.poilkar.nehank.firebaselocationtracking.model
 
 import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ServerTimestamp
