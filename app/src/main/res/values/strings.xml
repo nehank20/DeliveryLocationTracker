@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FirebaseLocationTracking</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="gmaps_api_key">AIzaSyA3DUGc3V4SEv5u3tv8X1ydl1h3Y8ENgaI</string>
+</resources>
