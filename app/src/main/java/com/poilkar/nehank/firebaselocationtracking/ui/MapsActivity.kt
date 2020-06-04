@@ -92,7 +92,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
 
 
         deliveryLocation =
-            LatLng(19.065419, 72.833122)
+            LatLng(19.094295, 72.837567)
         googleMap.addMarker(
             MarkerOptions().position(deliveryLocation)
                 .title("Your Location")
@@ -184,14 +184,73 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
         }
     }
 
-    private fun setCameraView(geoPoints: GeoPoint) {
-        val bottomBoundary = geoPoints.latitude - .1
-        val leftBoundary = geoPoints.longitude - .1
-        val topBoundary = geoPoints.latitude + .1
-        val rightBoundary = geoPoints.longitude + .1
-        boundaryMaps =
-            LatLngBounds(LatLng(bottomBoundary, leftBoundary), LatLng(topBoundary, rightBoundary))
-        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 10))
+    private fun setCameraView(
+        riderGeoPoint: GeoPoint,
+        deliveryGeoPoints: LatLng
+    ) {
+
+
+        //determine where is rider w.r.t delivery location
+        val topBoundary: Double?
+        val rightBoundary: Double?
+        val bottomBoundary: Double?
+        val leftBoundary: Double?
+
+        //rider is above deliveryPT
+        if(riderGeoPoint.latitude > deliveryGeoPoints.latitude){
+            topBoundary = riderGeoPoint.latitude
+            bottomBoundary = deliveryGeoPoints.latitude
+
+        }
+        //rider is above deliveryPT
+        else if(riderGeoPoint.latitude < deliveryGeoPoints.latitude){
+            topBoundary = deliveryGeoPoints.latitude
+            bottomBoundary = riderGeoPoint.latitude
+        }
+        // both on same point
+        else{
+
+            //default first if else loop
+
+            topBoundary = riderGeoPoint.latitude
+            bottomBoundary = deliveryGeoPoints.latitude
+        }
+
+
+
+
+        //rider is to right of deliverPt
+        if(riderGeoPoint.longitude > deliveryGeoPoints.longitude){
+            rightBoundary = riderGeoPoint.longitude
+            leftBoundary = deliveryGeoPoints.longitude
+        }
+
+        //rider is to left of deliverPt
+        else if(riderGeoPoint.longitude < deliveryGeoPoints.longitude){
+            rightBoundary =  deliveryGeoPoints.longitude
+            leftBoundary =  riderGeoPoint.longitude
+        }
+        else{
+
+            //default first if else loop
+
+            rightBoundary = riderGeoPoint.longitude
+            leftBoundary = deliveryGeoPoints.longitude
+        }
+
+
+
+//        topBoundary = riderGeoPoint.latitude
+//        rightBoundary = riderGeoPoint.longitude
+//
+//        bottomBoundary = deliveryGeoPoints.latitude
+//        leftBoundary = deliveryGeoPoints.longitude
+
+
+        boundaryMaps = LatLngBounds(LatLng(bottomBoundary, leftBoundary), LatLng(topBoundary, rightBoundary))
+
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 80)) // padding from the edges
+//        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(geoPoints.latitude, geoPoints.longitude), 14.0f))
     }
 
     override fun onResume() {
@@ -240,7 +299,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
 
             mClusterManager.cluster()
 //            calculateDirections(deliveryLocation)
-            setCameraView(geoPoints)
+            setCameraView(geoPoints,deliveryLocation)
         }
     }
 
@@ -299,8 +358,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                         val updatedUserLocation: DriverLocation =
                             task.result?.toObject(DriverLocation::class.java)!!
 
-                        // update the location
-
                         try {
                             val snippet = "Drivers location"
                             val avatar: Int = resources.getIdentifier(
@@ -308,17 +365,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
                                 "drawable",
                                 this@MapsActivity.packageName
                             )
-
                             clusterMarker.mPosition = LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude)
-
-
                             mClusterManagerRenderer.setUpdateMarker(deliveryLocation, clusterMarker, LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude))
-
-//                            animateMarker(clusterMarker,clusterMarker.mPosition,false)
-
-
-//                            MarkerAnimation.animateMarkerToGB(clusterMarker, LatLng(updatedUserLocation.geo_points!!.latitude, updatedUserLocation.geo_points.longitude), LatLngInterpolator.Spherical());
-
                         } catch (e: java.lang.NullPointerException) {
                             Log.e(
                                 "TAGG",
