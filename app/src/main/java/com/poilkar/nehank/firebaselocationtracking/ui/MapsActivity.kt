@@ -249,7 +249,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback , GoogleMap.OnInfoW
 
         boundaryMaps = LatLngBounds(LatLng(bottomBoundary, leftBoundary), LatLng(topBoundary, rightBoundary))
 
-        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 80)) // padding from the edges
+        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(boundaryMaps, 100)) // padding from the edges
 //        mGoogleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(LatLng(geoPoints.latitude, geoPoints.longitude), 14.0f))
     }
 

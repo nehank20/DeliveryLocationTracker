@@ -26,6 +26,24 @@ object MarkerAnimation {
         val start = SystemClock.uptimeMillis()
         val interpolator: Interpolator = AccelerateDecelerateInterpolator()
         val durationInMs = 2000f
+
+
+        CoroutineScope(Dispatchers.IO).launch {
+            val bearing =
+                calculateBearing(
+                    deliveryLocation.latitude,
+                    deliveryLocation.longitude,
+                    finalPosition!!.latitude,
+                    finalPosition.longitude
+                )
+
+            withContext(Dispatchers.Main){
+//                marker.rotation = bearing
+                        rotateMarker(marker,bearing)
+            }
+        }
+
+
         handler.post(object : Runnable {
             var elapsed: Long = 0
             var t = 0f
@@ -37,22 +55,6 @@ object MarkerAnimation {
                 v = interpolator.getInterpolation(t)
 
                 marker.position = latLngInterpolator.interpolate(v, startPosition, finalPosition)!!
-
-                CoroutineScope(Dispatchers.IO).launch {
-                    val bearing =
-                        calculateBearing(
-                            deliveryLocation.latitude,
-                            deliveryLocation.longitude,
-                            finalPosition!!.latitude,
-                            finalPosition.longitude
-                        )
-
-                    withContext(Dispatchers.Main){
-                        marker.rotation = bearing
-//                        rotateMarker(marker,bearing)
-                    }
-                }
-
 
                 // Repeat till progress is complete.
                 if (t < 1) {
